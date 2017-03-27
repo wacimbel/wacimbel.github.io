@@ -1,1 +1,475 @@
-"Hello World" 
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+      <style>
+
+        h1 {
+          font-family: "Century Gothic";
+          font-size: 26px;
+        }
+
+        h2 {
+          font-family: "Century Gothic";
+          font-size: 18px;
+        }
+        div{
+          font-style: italic;
+
+        }
+        p,div {
+          font-family: "Century Gothic";
+
+        }
+        div.bar {
+          display: inline-block;
+          width: 10px;
+          height: 75px;
+          background-color: teal;
+          margin-right: 2px;
+        }
+
+        button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            transition-duration: 0.4s;
+            border: 2px solid #4CAF50 ;
+            border-radius: 6px;
+        }
+
+        button:hover {
+          background-color: white; /* Green */
+          color: black;
+        }
+        .axis path,
+        .axis line {
+          fill:none;
+          stroke: black;
+          shape-rendering: crispEdges;
+        }
+        .axis text{
+
+          font-family: Verdana;
+          font-size: 11px;
+        }
+
+        text{
+
+          font-family: Verdana;
+          font-size: 11px;
+        }
+        /*svg.test{
+
+          background-color: teal;
+          width: 10px;
+          display: inline-block;
+
+        }*/
+      </style>
+
+          <meta charset="utf-8">
+          <title>D3 Page Template</title>
+          <script type="text/javascript" src="d3\d3.js">
+
+
+          </script>
+    </head>
+    <body>
+
+      <h1>Assignment 2A: One scatter plot and two datasets</h1>
+      <p>This visualisation represents the yearly amount of crimes in various districts of San Francisco. <br>
+        X axis stands for prostitution crimes, while Y axis stands for vehicle thefts. The radius of each point corresponds to the total amount of crimes (every category) in this district. <br><br>
+
+        You can toggle between data from years 2003 and 2015 by clicking on the button below. We decided to keep the same scale, to easily compare the crime evolution among those 12 years. Indeed we can see here that 2015 crimes are generally higher in all districts even if there is globally a decrease regarding prostitution and vehicle theft incidents.
+      </p>
+
+      <button id='#button_toggle'> Click here to toggle between 2003 and 2015! </button>
+      <p id='data_displayed'>Data displayed: 2003 </p>
+
+        <script type="text/javascript">
+
+      // Scatterplot trials
+      // Creation of the dataset
+      var npoints = 40;
+      var dataset = [];
+      var w = 800;
+      var h = 500;
+      var svg = d3.select("body").append("svg").attr("width", w).attr("height",h);
+      var padding = 70;
+
+      var current_file = 'crimes_2003.csv'+'?' + Math.floor(Math.random() * 1000);
+      // We add a random number at the end to avoid using the cache, and take into account changes in the csv files
+      d3.csv(current_file, function(data){
+
+          console.log("data: ", data)
+
+            dataset = data.map(function(d){
+            var j =[ d['PdDistrict'], +d['Prostitution'], +d['Vehicle Theft'], +d['Total crimes']];
+            console.log(j);
+            return j;
+          });
+
+          dataviz(dataset);
+
+      })
+
+     var dataviz = function(dataset){
+
+
+      var xscale = d3.scale.linear().domain([-20,50 + d3.max(dataset,function(d){return d[1];})]).range([0 + padding,w-2*padding]);
+      var yscale = d3.scale.linear().domain([0,d3.max(dataset,function(d){return d[2];})]).range([h-padding,0+padding]);
+      var rscale = d3.scale.linear().domain([d3.min(dataset,function(d){return d[3];}),d3.max(dataset,function(d){return d[3];})]).range([5,20]);
+
+
+      svg.selectAll("circle").data(dataset).enter().append("circle")
+      .attr({
+        "cx":function(d){return xscale(d[1]);},
+        "cy":function(d){return yscale(d[2]);},
+        "r":function(d){return rscale(d[3]);},
+        // stroke:"black",
+        opacity: 0.5,
+        "fill":"black"
+      });
+
+      svg.selectAll("text").data(dataset).enter().append("text").text(function(d){return d[0] ;})
+      .attr({
+        "x":function(d){return xscale(30 + d[1]);},
+        "y":function(d){return yscale(-20 + d[2]);},
+        "fill":"black",
+        "font-size":"12px"
+        // "font-family": "sans-serif"
+      });
+
+      d3.select("#data_displayed").html("Data displayed: 2003")
+      .attr({
+        "font-family": 'Century Gothic',
+        "font-size": '20px'
+      });
+
+
+      // Define x axis
+      var xaxis = d3.svg.axis();
+      xaxis.scale(xscale);
+      xaxis.orient("bottom").ticks(10);
+
+      // Display X axis
+      svg.append("g").attr("class","axis").attr("transform", "translate(0," + (h - padding) + ")").call(xaxis);
+
+      // Y axis label
+      svg.append("text")
+          .attr("class", "text")
+          .attr('text-anchor', 'middle')  // this makes it easy to centre the text as the transform is applied to the anchor
+          .attr("transform", "translate("+ (w/2) +","+(h - padding/3)+")")  // text is drawn off the screen top left, move down and out and rotate
+          .text("Prostitution");
+
+      //Define y axis
+      var yAxis = d3.svg.axis()
+                        .scale(yscale)
+                        .orient("left")
+                        .ticks(5);
+
+      // Display Y axis
+      svg.append("g")
+          .attr("class", "axis")
+          .attr("transform", "translate(" + padding + ",0)")
+          .call(yAxis);
+
+
+
+      // Y axis label
+      svg.append("text")
+          .attr("class", "text")
+          .attr('text-anchor', 'middle')  // this makes it easy to centre the text as the transform is applied to the anchor
+          .attr("transform", "translate("+ (padding/3) +","+(h/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+          .text("Vehicle Theft Incidents");
+
+
+
+          d3.select('button').on('click',function(){
+            var color, spacing, text ;
+
+            if (current_file.slice(0,'crimes_2003.csv'.length) == 'crimes_2003.csv'){
+
+              current_file = 'crimes_2015.csv'+'?' + Math.floor(Math.random() * 1000);
+              color = "teal";
+              spacing = 50;
+              text = "2015";
+			  
+            }else{
+              current_file = 'crimes_2003.csv'+'?' + Math.floor(Math.random() * 1000);
+              color = "black";
+              spacing = 30 ;
+              text = "2003";
+            }
+
+
+
+
+            d3.csv(current_file, function(dd){
+              dataset2 = dd.map(function(d){
+              var j =[ d['PdDistrict'], +d['Prostitution'], +d['Vehicle Theft'], +d['Total crimes']];
+              return j;
+            });
+
+            console.log(dataset2);
+
+              // scatter_display(dataset2,   xscale, yscale, rscale);
+
+              svg.selectAll("circle").data(dataset2).transition()
+              .duration(800).ease("exp")
+              .attr({
+                "cx":function(d){return xscale(d[1]);},
+                "cy":function(d){return yscale(d[2]);},
+                "r":function(d){return rscale(d[3]);},
+                "fill":color
+              });
+
+
+              svg.selectAll("text").data(dataset2).transition()
+              .duration(800).ease("exp").text(function(d){return d[0] ;})
+              .attr({
+                "x":function(d){return xscale(spacing + d[1]);},
+                "y":function(d){return yscale(d[2]);},
+                "fill":"black",
+                "font-size":"12px"
+                // "font-family": "sans-serif"
+              });
+
+              d3.select("#data_displayed").transition().delay(500).text("Data displayed: " + text)
+
+
+
+            })
+
+
+          })
+
+
+
+        };
+      // svg.select('h2').on('click',function(d){
+      //
+      //
+      //
+      // })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          // End of csv function
+    //  });
+        // End of csv function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </script>
+
+
+      <h1>Assignment 2B: Visualizing geodata</h1>
+      <p>
+		The following geospatial visualization displays the repartition of prostitution crimes in San Francisco (from 2003 until 2016). We try to find 
+		some clusters using K-means algorithm. These clusters can be useful to identify the districts where many prostitution crimes are committed.<br />
+		Several values of K can be chosen (2, 3, 4, 5 or 6), and the points corresponding to the crimes are then updated automatically. The centers of the
+		clusters are also updated (black points).<br />
+		The file that stores the location of each crime is uploaded for each change of the value K. Therefore, the size of this file should be as lower as 
+		possible, otherwise the loading time could be too long and annoying.
+	  </p>
+
+	  		<svg width="500" height="20">
+			<text id="kmeans2" x="45" y="15" font-size="15" fill="black" text-anchor="middle">
+				click to k2</text>
+			<rect id="kmeans2" x="0" y="0" width="90" height="20" fill="white"
+				 stroke="black" stroke-width="1" opacity="0.2"/>	
+
+			<text id="kmeans3" x="145" y="15" font-size="15" fill="black" text-anchor="middle">
+				click to k3</text>	
+			<rect id="kmeans3" x="100" y="0" width="90" height="20" fill="white"
+				 stroke="black" stroke-width="1" opacity="0.2"/>	
+				 
+			<text id="kmeans4" x="245" y="15" font-size="15" fill="black" text-anchor="middle">
+				click to k4</text>	
+			<rect id="kmeans4" x="200" y="0" width="90" height="20" fill="white"
+				 stroke="black" stroke-width="1" opacity="0.2"/>
+				 
+			<text id="kmeans5" x="345" y="15" font-size="15" fill="black" text-anchor="middle">
+				click to k5</text>
+			<rect id="kmeans5" x="300" y="0" width="90" height="20" fill="white"
+				 stroke="black" stroke-width="1" opacity="0.2"/>	
+
+			<text id="kmeans6" x="445" y="15" font-size="15" fill="black" text-anchor="middle">
+				click to k6</text>	
+			<rect id="kmeans6" x="400" y="0" width="90" height="20" fill="white"
+				 stroke="black" stroke-width="1" opacity="0.2"/>	
+			
+		</svg>
+		<br />
+		<h4>Showing k3</h4>
+		
+		<script type="text/javascript">
+
+			//Width and height
+			var w = 500;
+			var h = 500;
+			var currentk = 3;
+			// Colors for the crime points
+			var colors = ["blue", "red", "yellow", "orange", "green", "purple"];
+			
+			
+			
+			//Define map projection
+			var projection = d3.geo.mercator()
+			.center([-122.433701, 37.767683])
+								   .translate([w/2, h/2])
+								   .scale([170000]);
+			//Define path generator
+			var path = d3.geo.path()
+							 .projection(projection);
+			//Create SVG element
+			var svg2 = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+			//Load in GeoJSON data
+			d3.json("sf.json", function(error,json) {
+				
+				if (error) throw error;
+				//Bind data and create one path per GeoJSON feature
+				svg2.selectAll("path")
+				   .data(json.features)
+				   .enter()
+				   .append("path")
+				   .attr("d", path)
+				   .style("fill", "steelblue")
+				   .append("title")
+				   .text(function(d) {return d.properties.DISTRICT;});
+				   
+				// display the name of the districts
+				svg2.selectAll("text")
+					.data(json.features)
+					.enter()
+					.append("text")
+					.attr("fill", "white")
+					.attr("transform", function(d) { 
+						var centroid = path.centroid(d);
+						return "translate(" + centroid[0] + "," + centroid[1] + ")"
+					})
+					.attr("text-anchor", "middle")
+					.text(function(d) {
+						  return d.properties.DISTRICT;
+					});
+
+				
+			    d3.csv("kmeans"+currentk+".csv", function(error, data) {
+					
+					if (error) throw error;
+					
+					// Plot the crimes and the cluster centers
+					svg2.selectAll("circle")
+					   .data(data)
+					   .enter()
+					   .append("circle")
+					   .attr("cx", function(d) {
+						   return projection([d.lon, d.lat])[0];
+					   })
+					   .attr("cy", function(d) {
+						   return projection([d.lon, d.lat])[1];
+					   })
+					   .attr("r", function(d) {
+							if (d.cluster>=0) {return 2;}
+							else {return 8;}})
+					   .style("fill", function(d) { 
+							if (d.cluster>=0) {return colors[parseInt(d.cluster)];}
+							else {return "black"}})
+					   .style("opacity", 0.75);
+					   
+
+				});
+					
+				// WHEN CLICKING
+				d3.selectAll("rect").on("click", function (d) {
+					console.log(d3.select(this).attr("id"));
+					newk = parseInt(d3.select(this).attr("id")[6]);
+					d3.csv(d3.select(this).attr("id")+".csv", function(error, data) {
+					
+						if (error) throw error;
+						
+						points = svg2.selectAll("circle").data(data);
+						
+						points.enter()
+							.append("circle")
+						    .attr("cx", function(d) {
+							    return projection([d.lon, d.lat])[0];
+						    })
+						    .attr("cy", function(d) {
+							    return projection([d.lon, d.lat])[1];
+						    })
+						    .attr("r", function(d) {
+								if (d.cluster>=0) {return 2;}
+								else {return 8;}})
+						    .style("fill", function(d) { 
+								if (d.cluster>=0) {return colors[parseInt(d.cluster)];}
+								else {return "black"}})
+						    .style("opacity", 0.75);
+						
+						points.transition().duration(1000)
+							.attr("cx", function(d) {
+							    return projection([d.lon, d.lat])[0];
+						    })
+						    .attr("cy", function(d) {
+							    return projection([d.lon, d.lat])[1];
+						    })
+						    .attr("r", function(d) {
+								if (d.cluster>=0) {return 2;}
+								else {return 8;}})
+						    .style("fill", function(d) { 
+								if (d.cluster>=0) {return colors[parseInt(d.cluster)];}
+								else {return "black"}})
+						    .style("opacity", 0.75);
+							
+						points.exit().remove();
+						
+						d3.select("h4").text("Showing k"+newk);
+					});
+				});				
+		
+			});
+			
+		</script>
+    </body>
+</html>
