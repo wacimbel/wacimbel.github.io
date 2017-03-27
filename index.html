@@ -447,7 +447,7 @@
 								else {return "black"}})
 						    .style("opacity", 0.75);
 						
-						points.transition().duration(1000)
+						points.transition().duration(3000)
 							.attr("cx", function(d) {
 							    return projection([d.lon, d.lat])[0];
 						    })
